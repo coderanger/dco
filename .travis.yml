@@ -1,0 +1,16 @@
+sudo: false
+cache: bundler
+language: ruby
+rvm:
+- "2.1.9"
+- "2.2.5"
+- "2.3.1"
+gemfile:
+- gemfiles/release.gemfile
+- gemfiles/master.gemfile
+before_install:
+- if [[ $BUNDLE_GEMFILE == *master.gemfile ]]; then gem update --system; fi
+- gem --version
+- gem install bundler
+- bundle --version
+script: bundle exec rake spec
