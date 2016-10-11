@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+require 'git'
 require 'thor'
 
 
@@ -32,7 +33,7 @@ module Dco
       commit_msg = IO.read(tmp_path)
       unless commit_msg =~ /^Signed-off-by:/m
         commit_msg << "\n" unless commit_msg.end_with?("\n")
-        commit_msg << "\nSigned-off-by: asdf\n"
+        commit_msg << "\nSigned-off-by: #{git_identity}\n"
         IO.write(tmp_path, commit_msg)
       end
     end
@@ -89,18 +90,23 @@ export #{ENV.select {|key, value| key =~ /^(bundle_|ruby|gem_)/i }.map {|key, va
 exit $?
 EOH
 
+    # Path to the git hook script.
+    # @api private
+    HOOK_PATH = '.git/hooks/commit-msg'
+
     desc 'enable', 'Enable auto-sign-off for this repository'
     def enable
       assert_repo!
       unless our_hook?
         raise Thor::Error.new('commit-msg hook already exists, not overwriting')
       end
-      unless yes?("Do you, #{'name'}, certify that all future commits to this repository will be under the terms of the Developer Certificate of Origin? [yes/no]")
+      say("#{DCO_TEXT}\n\n")
+      unless yes?("Do you, #{git_identity}, certify that all future commits to this repository will be under the terms of the Developer Certificate of Origin? [yes/no]")
         raise Thor::Error.new('Not enabling auto-sign-off')
       end
-      IO.write(hook_path, HOOK_SCRIPT)
+      IO.write(HOOK_PATH, HOOK_SCRIPT)
       # 755 is what the defaults from `git init` use so probably good enough.
-      File.chmod(00755, hook_path)
+      File.chmod(00755, HOOK_PATH)
       say('DCO auto-sign-off enabled', :green)
     end
 
@@ -110,7 +116,7 @@ EOH
       unless our_hook?
         raise Thor::Error.new('commit-msg hook is external, not removing')
       end
-      File.unlink(hook_path)
+      File.unlink(HOOK_PATH)
       say('DCO auto-sign-off disabled', :green)
     end
 
@@ -129,12 +135,15 @@ EOH
       end
     end
 
-    # Find the path to the commit-msg hook script.
+    # Create a Git repository object for the current repo.
     #
     # @api private
-    # @return [String]
-    def hook_path
-      File.join(Dir.pwd, '.git', 'hooks', 'commit-msg')
+    # @return [Git::Base]
+    def repo
+      @repo ||= begin
+        assert_repo!
+        Git.open('.')
+      end
     end
 
     # Check if we are in control of the commit-msg hook.
@@ -142,8 +151,15 @@ EOH
     # @api private
     # @return [Boolean]
     def our_hook?
-      path = hook_path
-      !File.exist?(path) || IO.read(path).include?('INSTALLED BY DCO GEM')
+      !File.exist?(HOOK_PATH) || IO.read(HOOK_PATH).include?('INSTALLED BY DCO GEM')
+    end
+
+    # Find the git identity string for the current user.
+    #
+    # @api private
+    # @return [String]
+    def git_identity
+      "#{repo.config('user.name')} <#{repo.config('user.email')}>"
     end
   end
 end

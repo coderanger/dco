@@ -33,6 +33,7 @@ Gem::Specification.new do |spec|
   spec.test_files = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = %w{lib}
 
+  spec.add_dependency 'git', '~> 1.3'
   spec.add_dependency 'thor', '~> 0.19'
 
   spec.add_development_dependency 'rake', '~> 11.0'
