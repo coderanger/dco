@@ -120,6 +120,10 @@ EOH
       say('DCO auto-sign-off disabled', :green)
     end
 
+    desc 'sign', 'Retroactively apply sign-off to the a branch'
+    def sign(branch=nil)
+    end
+
     private
 
     # Check that we are in a git repo that we have write access to.
