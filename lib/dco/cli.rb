@@ -100,7 +100,7 @@ EOH
       unless our_hook?
         raise Thor::Error.new('commit-msg hook already exists, not overwriting')
       end
-      say("#{DCO_TEXT}\n\n")
+      say("#{DCO_TEXT}\n\n", :yellow)
       unless yes?("Do you, #{git_identity}, certify that all future commits to this repository will be under the terms of the Developer Certificate of Origin? [yes/no]")
         raise Thor::Error.new('Not enabling auto-sign-off')
       end
