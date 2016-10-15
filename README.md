@@ -43,15 +43,13 @@ created by `dco enable`.
 
 ### `dco sign`
 
-*Coming soon.*
-
 The `dco sign` command retroactively applies the sign-off commit message to
 every commit in a branch. By default it will update the current branch, but you
 can provide a branch name via `dco sign BRANCH`.
 
 This can also be used to sign-off a branch on the behalf of another contributor.
 You must provide a link to a public declaration that the user is agreeing to the
-DCO: `dco sign --behalf https://github.com/me/myproject/pulls/1#issuecomment-238042611`.
+DCO: `dco sign --behalf 'https://github.com/me/myproject/pulls/1#issuecomment-238042611'`.
 
 ## Sponsors
 
