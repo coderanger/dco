@@ -15,6 +15,7 @@
 #
 
 require 'spec_helper'
+require 'git'
 require 'shellwords'
 
 describe 'dco' do
@@ -45,6 +46,11 @@ describe 'dco' do
     before { git_init(*args) }
   end
 
+  let(:repo) { Git.open(temp_path) }
+
+  # Default subject, the most recent commit object.
+  subject { repo.log.first }
+
   describe 'baseline' do
     # Check that the test harness is working.
     git_init
@@ -53,13 +59,8 @@ describe 'dco' do
       command 'git add testing'
       command 'git commit -m "harness test"'
     end
-    command 'git log'
 
-    it do
-      expect(subject.exitstatus).to eq 0
-      expect(subject.stdout).to match /^commit/
-      expect(subject.stdout).to match /harness test/
-    end
+    its(:message) { is_expected.to eq 'harness test' }
   end # /describe baseline
 
   describe 'dco enable' do
@@ -106,12 +107,8 @@ describe 'dco' do
         command 'git add testing'
         command 'git commit -m "test commit"'
       end
-      command 'git log'
 
-      it do
-        expect(subject.exitstatus).to eq 0
-        expect(subject.stdout).to match /^    test commit\n\s*\n    Signed-off-by: Alan Smithee <asmithee@example\.com>\s*\z/
-      end
+      its(:message) { is_expected.to eq "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>" }
     end # /context with a normal commit
 
     context 'with a signed-off commit' do
@@ -122,12 +119,8 @@ describe 'dco' do
         command 'git add testing'
         command 'git commit -s -m "test commit"'
       end
-      command 'git log'
 
-      it do
-        expect(subject.exitstatus).to eq 0
-        expect(subject.stdout).to match /^    test commit\n\s*\n    Signed-off-by: Alan Smithee <asmithee@example\.com>\s*\z/
-      end
+      its(:message) { is_expected.to eq "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>" }
     end # /context with a signed-off commit
 
     context 'with enable called twice' do
@@ -139,12 +132,8 @@ describe 'dco' do
         command 'git add testing'
         command 'git commit -m "test commit"'
       end
-      command 'git log'
 
-      it do
-        expect(subject.exitstatus).to eq 0
-        expect(subject.stdout).to match /^    test commit\n\s*\n    Signed-off-by: Alan Smithee <asmithee@example\.com>\s*\z/
-      end
+      its(:message) { is_expected.to eq "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>" }
     end # /context with enable called twice
   end # /describe dco enable
 
@@ -158,12 +147,8 @@ describe 'dco' do
         command 'git add testing'
         command 'git commit -m "test commit"'
       end
-      command 'git log'
 
-      it do
-        expect(subject.exitstatus).to eq 0
-        expect(subject.stdout).to match /^    test commit\s*\z/
-      end
+      its(:message) { is_expected.to eq "test commit" }
     end # /context with a normal commit
 
     context 'with disable called twice' do
@@ -176,12 +161,8 @@ describe 'dco' do
         command 'git add testing'
         command 'git commit -m "test commit"'
       end
-      command 'git log'
 
-      it do
-        expect(subject.exitstatus).to eq 0
-        expect(subject.stdout).to match /^    test commit\s*\z/
-      end
+      its(:message) { is_expected.to eq "test commit" }
     end # /context with disable called twice
 
     context 'with an external commit-msg script' do
