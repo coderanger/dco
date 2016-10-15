@@ -45,12 +45,6 @@ describe 'dco' do
     before { git_init(*args) }
   end
 
-  before do
-    # Lies.
-    new_script = Dco::CLI::HOOK_SCRIPT.gsub($0, File.expand_path('../../bin/dco', __FILE__))
-    stub_const('Dco::CLI::HOOK_SCRIPT', new_script)
-  end
-
   describe 'baseline' do
     # Check that the test harness is working.
     git_init

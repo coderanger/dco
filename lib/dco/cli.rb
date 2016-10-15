@@ -86,7 +86,7 @@ EOH
 #!/bin/sh
 # INSTALLED BY DCO GEM
 export #{ENV.select {|key, value| key =~ /^(bundle_|ruby|gem_)/i }.map {|key, value| "#{key}=#{value.inspect}"}.join(' ')}
-#{Thor::Util.ruby_command} #{$0} process_commit_message $1
+#{Thor::Util.ruby_command} #{File.expand_path('../../../bin/dco', __FILE__)} process_commit_message $1
 exit $?
 EOH
 
