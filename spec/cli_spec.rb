@@ -135,6 +135,16 @@ describe 'dco' do
 
       its(:message) { is_expected.to eq "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>" }
     end # /context with enable called twice
+
+    context 'without -y' do
+      git_init
+      dco_command 'enable'
+
+      it do
+        expect(subject.exitstatus).to eq 1
+        expect(subject.stderr).to eq "Not enabling auto-sign-off without approval\n"
+      end
+    end # /context without -y
   end # /describe dco enable
 
   describe 'dco disable' do
@@ -263,6 +273,18 @@ describe 'dco' do
         expect(repo.log[2].message).to eq "first commit"
       end
     end # /context with one commit in the branch
+
+    context 'with one commit in the branch without -y' do
+      before do
+        command 'echo three > testing && git commit -a -m "first branch commit"'
+      end
+      dco_command 'sign mybranch'
+
+      it do
+        expect(subject.exitstatus).to eq 1
+        expect(subject.stderr).to eq "Not signing off on commits without approval\n"
+      end
+    end # /context with one commit in the branch without -y
 
     context 'with two commits in the branch' do
       before do
@@ -396,5 +418,19 @@ describe 'dco' do
         expect(repo.log[3].message).to eq "first commit"
       end
     end # /context with an existing backup pointer
+
+    context 'with an existing backup pointer without -y' do
+      before do
+        command 'echo three > testing && git commit -a -m "first branch commit"'
+        dco_command 'sign -y mybranch'
+        command 'echo four > testing && git commit -a -m "second branch commit"'
+      end
+      dco_command 'sign mybranch'
+
+      it do
+        expect(subject.exitstatus).to eq 1
+        expect(subject.stderr).to eq "Backup ref present, not continuing\n"
+      end
+    end # /context with an existing backup pointer without -y
   end # /describe dco sign
 end

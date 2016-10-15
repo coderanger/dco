@@ -142,8 +142,8 @@ EOH
         raise Thor::Error.new('commit-msg hook already exists, not overwriting')
       end
       say("#{DCO_TEXT}\n\n", :yellow)
-      unless options[:yes] || yes?("Do you, #{git_identity}, certify that all future commits to this repository will be under the terms of the Developer Certificate of Origin? [yes/no]")
-        raise Thor::Error.new('Not enabling auto-sign-off')
+      unless confirm?("Do you, #{git_identity}, certify that all future commits to this repository will be under the terms of the Developer Certificate of Origin? [yes/no]")
+        raise Thor::Error.new('Not enabling auto-sign-off without approval')
       end
       IO.write(HOOK_PATH, HOOK_SCRIPT)
       # 755 is what the defaults from `git init` use so probably good enough.
@@ -178,7 +178,7 @@ EOH
       begin
         repo.show("refs/original/refs/heads/#{branch}")
         # If this doesn't error, a backup ref is present.
-        unless options[:yes] || yes?("An existing backup of branch #{branch} is present from a previous filter-branch. Do you want to remove this backup and continue? [yes/no]")
+        unless confirm?("An existing backup of branch #{branch} is present from a previous filter-branch. Do you want to remove this backup and continue? [yes/no]")
           raise Thor::Error.new('Backup ref present, not continuing')
         end
         # Clear the backup.
@@ -211,8 +211,8 @@ EOH
       else
         "Do you, #{git_identity}, certify that these commits are contributed under the terms of the Developer Certificate of Origin? [yes/no]"
       end
-      unless options[:yes] || yes?(confirm_msg)
-        raise Thor::Error.new('Not signing off on commits')
+      unless confirm?(confirm_msg)
+        raise Thor::Error.new('Not signing off on commits without approval')
       end
 
       # Run the filter branch. Here be dragons. Yes, I'm calling a private method. I'm sorry.
@@ -230,6 +230,19 @@ EOH
     end
 
     private
+
+    # Modified version of Thor's #yes? to understand -y and non-interactive usage.
+    #
+    # @param msg [String] Message to show
+    # @return [Boolean]
+    def confirm?(msg)
+      return true if options[:yes]
+      unless STDOUT.isatty
+        say(msg)
+        return false
+      end
+      yes?(msg)
+    end
 
     # Check that we are in a git repo that we have write access to.
     #
