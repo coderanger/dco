@@ -51,6 +51,12 @@ module Dco
     # Internal command used by the git hook to implement the processing logic.
     # This is done in Ruby because writing it to work on all platforms in Bash
     # seems unfun.
+    #
+    # Design note: this should try as hard as possible to be fast, especially
+    # in hook mode as it adds overhead time to every commit there. Currently
+    # it should only have to touch the filesystem to read/write the message,
+    # when in hook mode. For filter mode, it does need to load the git config
+    # if using --behalf.
     desc 'process_commit_message', 'process a git commit message to add DCO signoff', hide: true
     options behalf: :string, repo: :string
     def process_commit_message(tmp_path=nil)
