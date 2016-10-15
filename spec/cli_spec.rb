@@ -224,38 +224,44 @@ describe 'dco' do
     end # /context hook mode
   end # /describe dco process_commit_message
 
-  # describe 'dco sign' do
-  #   # Create a branch structure for all tests.
-  #   git_init
-  #   file 'testing', 'one'
-  #   before do
-  #     cmds = [
-  #       'git add testing',
-  #       'git commit -m "first commit"',
-  #       'echo two > testing',
-  #       'git commit -a -m "second commit"',
-  #       'git checkout -b mybranch',
-  #     ]
-  #     command cmds.join(' && ')
-  #   end
+  describe 'dco sign' do
+    # Create a branch structure for all tests.
+    git_init
+    file 'testing', 'one'
+    before do
+      cmds = [
+        'git add testing',
+        'git commit -m "first commit"',
+        'echo two > testing',
+        'git commit -a -m "second commit"',
+        'git checkout -b mybranch',
+      ]
+      command cmds.join(' && ')
+    end
 
-  #   context 'with no commits in the branch' do
-  #     dco_command 'sign mybranch'
+    context 'with no commits in the branch' do
+      dco_command 'sign -y mybranch'
 
-  #     it do
-  #       expect(subject.exitstatus).to eq 1
-  #       expect(subject.stderr).to eq 'no commits to sign-off, aborting'
-  #     end
-  #   end # /context with no commits in the branch
+      it do
+        expect(subject.exitstatus).to eq 1
+        expect(subject.stderr).to eq "Branch mybranch has no commits which require sign-off\n"
+      end
+    end # /context with no commits in the branch
 
-  #   context 'with one commit in the branch' do
-  #     before do
-  #       command('echo three > testing && git commit -a -m "first branch commit"')
-  #       dco_command 'sign -y mybranch'
-  #     end
+    context 'with one commit in the branch' do
+      before do
+        command('echo three > testing && git commit -a -m "first branch commit"')
+      end
+      dco_command 'sign -y mybranch'
 
-  #     it do
-  #     end
-  #   end # /context with one commit in the branch
-  # end # /describe dco sign
+      it do
+        expect(subject.exitstatus).to eq 0
+        expect(subject.stdout).to match /^Developer's Certificate of Origin 1\.1$/
+        expect(subject.stdout).to match /^Going to sign-off the following commits:\n\* \h{7} Alan Smithee <asmithee@example\.com> first branch commit$/
+        expect(repo.log[0].message).to eq "first branch commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>"
+        expect(repo.log[1].message).to eq "second commit"
+        expect(repo.log[2].message).to eq "first commit"
+      end
+    end # /context with one commit in the branch
+  end # /describe dco sign
 end
