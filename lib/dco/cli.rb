@@ -243,7 +243,7 @@ EOH
         raise Thor::Error.new("#{repo_path} does not appear to be a git repository")
       end
       unless repo.repo.writable?
-        raise Thor::Error.new("Git repository at #{repo.dir.path} is read-only")
+        raise Thor::Error.new("Git repository at #{repo.repo.path} is read-only")
       end
     end
 
