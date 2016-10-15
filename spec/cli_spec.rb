@@ -189,49 +189,67 @@ describe 'dco' do
   end # /describe dco disable
 
   describe 'dco process_commit_message' do
+    around do |ex|
+      begin
+        ENV['GIT_AUTHOR_NAME'] = 'Alan Smithee'
+        ENV['GIT_AUTHOR_EMAIL'] = 'asmithee@example.com'
+        ex.run
+      ensure
+        ENV.delete('GIT_AUTHOR_NAME')
+        ENV.delete('GIT_AUTHOR_EMAIL')
+      end
+    end
+
     context 'hook mode' do
       dco_command 'process_commit_message msg'
-      def output_msg
-        IO.read(File.join(temp_path, 'msg'))
-      end
 
-      RSpec.shared_examples 'process_commit_message' do |input, output|
+      RSpec.shared_examples 'process_commit_message hook mode' do |input, output|
         file 'msg', input
-        around do |ex|
-          begin
-            ENV['GIT_AUTHOR_NAME'] = 'Alan Smithee'
-            ENV['GIT_AUTHOR_EMAIL'] = 'asmithee@example.com'
-            ex.run
-          ensure
-            ENV.delete('GIT_AUTHOR_NAME')
-            ENV.delete('GIT_AUTHOR_EMAIL')
-          end
-        end
 
         it do
           expect(subject.exitstatus).to eq 0
           expect(subject.stdout).to eq ''
           expect(subject.stderr).to eq ''
-          expect(output_msg).to eq output
+          expect(IO.read(File.join(temp_path, 'msg'))).to eq output
         end
       end
 
       context 'with a normal commit' do
-        it_behaves_like 'process_commit_message', "test commit\n", "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>\n"
+        it_behaves_like 'process_commit_message hook mode', "test commit\n", "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>\n"
       end # /context with a normal commit
 
       context 'with no trailing newline' do
-        it_behaves_like 'process_commit_message', "test commit", "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>\n"
+        it_behaves_like 'process_commit_message hook mode', "test commit", "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>\n"
       end # /context with no trailing newline
 
       context 'with existing sign-off' do
-        it_behaves_like 'process_commit_message', "test commit\n\nSigned-off-by: Someone Else <other@example.com>\n", "test commit\n\nSigned-off-by: Someone Else <other@example.com>\n"
+        it_behaves_like 'process_commit_message hook mode', "test commit\n\nSigned-off-by: Someone Else <other@example.com>\n", "test commit\n\nSigned-off-by: Someone Else <other@example.com>\n"
       end # /context with existing sign-off
 
       context 'with two existing sign-offs' do
-        it_behaves_like 'process_commit_message', "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>\nSigned-off-by: Someone Else <other@example.com>\n", "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>\nSigned-off-by: Someone Else <other@example.com>\n"
+        it_behaves_like 'process_commit_message hook mode', "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>\nSigned-off-by: Someone Else <other@example.com>\n", "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>\nSigned-off-by: Someone Else <other@example.com>\n"
       end # /context with two existing sign-offs
     end # /context hook mode
+
+    context 'filter mode' do
+      let(:input) { '' }
+      let(:stdin) { double('STDIN', read: input) }
+      before do
+        git_init
+        stub_const('STDIN', stdin)
+      end
+
+      context 'with a normal commit' do
+        let(:input) { "test commit\n" }
+        dco_command 'process_commit_message'
+
+        it do
+          expect(subject.exitstatus).to eq 0
+          expect(subject.stdout).to eq "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>\n"
+          expect(subject.stderr).to eq ''
+        end
+      end # /context with a normal commit
+    end # /context filter mode
   end # /describe dco process_commit_message
 
   describe 'dco sign' do
