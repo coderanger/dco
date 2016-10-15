@@ -28,7 +28,7 @@ module Dco
     # Internal command used by the git hook to implement the processing logic.
     # This is done in Ruby because writing it to work on all platforms in Bash
     # seems unfun.
-    desc 'process_commit_msg', 'process a git commit message to add DCO signoff', hide: true
+    desc 'process_commit_message', 'process a git commit message to add DCO signoff', hide: true
     def process_commit_message(tmp_path)
       commit_msg = IO.read(tmp_path)
       unless commit_msg =~ /^Signed-off-by:/m
@@ -95,13 +95,14 @@ EOH
     HOOK_PATH = '.git/hooks/commit-msg'
 
     desc 'enable', 'Enable auto-sign-off for this repository'
+    option :yes, aliases: 'y', type: :boolean
     def enable
       assert_repo!
       unless our_hook?
         raise Thor::Error.new('commit-msg hook already exists, not overwriting')
       end
       say("#{DCO_TEXT}\n\n", :yellow)
-      unless yes?("Do you, #{git_identity}, certify that all future commits to this repository will be under the terms of the Developer Certificate of Origin? [yes/no]")
+      unless options[:yes] || yes?("Do you, #{git_identity}, certify that all future commits to this repository will be under the terms of the Developer Certificate of Origin? [yes/no]")
         raise Thor::Error.new('Not enabling auto-sign-off')
       end
       IO.write(HOOK_PATH, HOOK_SCRIPT)
@@ -121,6 +122,8 @@ EOH
     end
 
     desc 'sign', 'Retroactively apply sign-off to the a branch'
+    option :behalf, aliases: 'b', type: :string
+    option :yes, aliases: 'y', type: :boolean
     def sign(branch=nil)
     end
 

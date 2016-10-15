@@ -16,8 +16,6 @@
 
 eval_gemfile File.expand_path('../../Gemfile', __FILE__)
 
-gem 'rspec', github: 'rspec/rspec'
-gem 'rspec-core', github: 'rspec/rspec-core'
-gem 'rspec-expectations', github: 'rspec/rspec-expectations'
-gem 'rspec-mocks', github: 'rspec/rspec-mocks'
-gem 'rspec-support', github: 'rspec/rspec-support'
+gem 'git', github: 'schacon/ruby-git'
+gem 'rspec-command', github: 'coderanger/rspec-command'
+gem 'thor', github: 'erikhuda/thor'

@@ -38,6 +38,7 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency 'rake', '~> 11.0'
   spec.add_development_dependency 'rspec', '~> 3.2'
+  spec.add_development_dependency 'rspec-command', '~> 1.0'
   spec.add_development_dependency 'fuubar', '~> 2.0'
   spec.add_development_dependency 'simplecov', '~> 0.9'
   spec.add_development_dependency 'yard', '~> 0.8'

@@ -19,5 +19,6 @@
 #
 # @since 1.0.0
 module Dco
+  autoload :CLI, 'dco/cli'
   autoload :VERSION, 'dco/version'
 end

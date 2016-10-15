@@ -15,6 +15,7 @@
 #
 
 require 'rspec'
+require 'rspec_command'
 require 'simplecov'
 
 # Check for coverage stuffs
@@ -43,4 +44,6 @@ RSpec.configure do |config|
   # the seed, which is printed after each run.
   #     --seed 1234
   config.order = 'random'
+
+  config.include RSpecCommand
 end
