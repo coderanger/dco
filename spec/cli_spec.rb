@@ -83,7 +83,7 @@ describe 'dco' do
       it do
         expect(subject.exitstatus).to eq 1
         expect(subject.stdout).to eq ''
-        expect(subject.stderr).to match /^Can't open .*?\/\.git for writing$/
+        expect(subject.stderr).to match /^Git repository at.*? is read-only$/
       end
     end # /context with an unwritable git repository
 
@@ -179,37 +179,83 @@ describe 'dco' do
   end # /describe dco disable
 
   describe 'dco process_commit_message' do
-    dco_command 'process_commit_message msg'
-    def output_msg
-      IO.read(File.join(temp_path, 'msg'))
-    end
-
-    RSpec.shared_examples 'process_commit_message' do |input, output|
-      git_init
-      file 'msg', input
-
-      it do
-        expect(subject.exitstatus).to eq 0
-        expect(subject.stdout).to eq ''
-        expect(subject.stderr).to eq ''
-        expect(output_msg).to eq output
+    context 'hook mode' do
+      dco_command 'process_commit_message msg'
+      def output_msg
+        IO.read(File.join(temp_path, 'msg'))
       end
-    end
 
-    context 'with a normal commit' do
-      it_behaves_like 'process_commit_message', "test commit\n", "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>\n"
-    end # /context with a normal commit
+      RSpec.shared_examples 'process_commit_message' do |input, output|
+        file 'msg', input
+        around do |ex|
+          begin
+            ENV['GIT_AUTHOR_NAME'] = 'Alan Smithee'
+            ENV['GIT_AUTHOR_EMAIL'] = 'asmithee@example.com'
+            ex.run
+          ensure
+            ENV.delete('GIT_AUTHOR_NAME')
+            ENV.delete('GIT_AUTHOR_EMAIL')
+          end
+        end
 
-    context 'with no trailing newline' do
-      it_behaves_like 'process_commit_message', "test commit", "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>\n"
-    end # /context with no trailing newline
+        it do
+          expect(subject.exitstatus).to eq 0
+          expect(subject.stdout).to eq ''
+          expect(subject.stderr).to eq ''
+          expect(output_msg).to eq output
+        end
+      end
 
-    context 'with existing sign-off' do
-      it_behaves_like 'process_commit_message', "test commit\n\nSigned-off-by: Someone Else <other@example.com>\n", "test commit\n\nSigned-off-by: Someone Else <other@example.com>\n"
-    end # /context with existing sign-off
+      context 'with a normal commit' do
+        it_behaves_like 'process_commit_message', "test commit\n", "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>\n"
+      end # /context with a normal commit
 
-    context 'with two existing sign-offs' do
-      it_behaves_like 'process_commit_message', "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>\nSigned-off-by: Someone Else <other@example.com>\n", "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>\nSigned-off-by: Someone Else <other@example.com>\n"
-    end # /context with two existing sign-offs
+      context 'with no trailing newline' do
+        it_behaves_like 'process_commit_message', "test commit", "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>\n"
+      end # /context with no trailing newline
+
+      context 'with existing sign-off' do
+        it_behaves_like 'process_commit_message', "test commit\n\nSigned-off-by: Someone Else <other@example.com>\n", "test commit\n\nSigned-off-by: Someone Else <other@example.com>\n"
+      end # /context with existing sign-off
+
+      context 'with two existing sign-offs' do
+        it_behaves_like 'process_commit_message', "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>\nSigned-off-by: Someone Else <other@example.com>\n", "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>\nSigned-off-by: Someone Else <other@example.com>\n"
+      end # /context with two existing sign-offs
+    end # /context hook mode
   end # /describe dco process_commit_message
+
+  # describe 'dco sign' do
+  #   # Create a branch structure for all tests.
+  #   git_init
+  #   file 'testing', 'one'
+  #   before do
+  #     cmds = [
+  #       'git add testing',
+  #       'git commit -m "first commit"',
+  #       'echo two > testing',
+  #       'git commit -a -m "second commit"',
+  #       'git checkout -b mybranch',
+  #     ]
+  #     command cmds.join(' && ')
+  #   end
+
+  #   context 'with no commits in the branch' do
+  #     dco_command 'sign mybranch'
+
+  #     it do
+  #       expect(subject.exitstatus).to eq 1
+  #       expect(subject.stderr).to eq 'no commits to sign-off, aborting'
+  #     end
+  #   end # /context with no commits in the branch
+
+  #   context 'with one commit in the branch' do
+  #     before do
+  #       command('echo three > testing && git commit -a -m "first branch commit"')
+  #       dco_command 'sign -y mybranch'
+  #     end
+
+  #     it do
+  #     end
+  #   end # /context with one commit in the branch
+  # end # /describe dco sign
 end
