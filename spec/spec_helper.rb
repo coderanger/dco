@@ -17,6 +17,8 @@
 require 'rspec'
 require 'rspec_command'
 require 'simplecov'
+require 'git'
+require 'shellwords'
 
 # Check for coverage stuffs
 if ENV['CODECOV_TOKEN'] || ENV['TRAVIS']
@@ -34,6 +36,43 @@ end
 
 require 'dco'
 
+module DcoSpecHelper
+  extend RSpec::SharedContext
+
+  def dco_command *args
+    cwd = Dir.pwd
+    begin
+      Dir.chdir(temp_path)
+      capture_output do
+        args = Shellwords.split(args.first) if args.length == 1 && args.first.is_a?(String)
+        Dco::CLI.start(args)
+      end
+    ensure
+      Dir.chdir(cwd)
+    end
+  rescue Exception => e
+    status  = e.is_a?(SystemExit) ? e.status : 1
+    e.output_so_far.define_singleton_method(:exitstatus) { status }
+    e.output_so_far
+  end
+
+  def git_init(name: 'Alan Smithee', email: 'asmithee@example.com')
+    command "git init && git config user.name \"#{name}\" && git config user.email \"#{email}\""
+  end
+
+  let(:repo) { Git.open(temp_path) }
+
+  module ClassMethods
+    def dco_command *args
+      subject { dco_command(*args) }
+    end
+
+    def git_init(*args)
+      before { git_init(*args) }
+    end
+  end
+end
+
 RSpec.configure do |config|
   # Basic configuraiton
   config.run_all_when_everything_filtered = true
@@ -46,4 +85,7 @@ RSpec.configure do |config|
   config.order = 'random'
 
   config.include RSpecCommand
+
+  config.include DcoSpecHelper
+  config.extend DcoSpecHelper::ClassMethods
 end
