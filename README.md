@@ -1,6 +1,7 @@
 # DCO
 
 [![Build Status](https://img.shields.io/travis/coderanger/dco.svg)](https://travis-ci.org/coderanger/dco)
+[![Windows Build Status](https://img.shields.io/appveyor/ci/coderanger/dco.svg)](https://ci.appveyor.com/project/coderanger/dco)
 [![Gem Version](https://img.shields.io/gem/v/dco.svg)](https://rubygems.org/gems/dco)
 [![Coverage](https://img.shields.io/codecov/c/github/coderanger/dco.svg)](https://codecov.io/github/coderanger/dco)
 [![Gemnasium](https://img.shields.io/gemnasium/coderanger/dco.svg)](https://gemnasium.com/coderanger/dco)
