@@ -191,10 +191,12 @@ describe 'dco' do
   describe 'dco process_commit_message' do
     around do |ex|
       begin
+        ENV['GIT_COMMIT'] = 'abcd123'
         ENV['GIT_AUTHOR_NAME'] = 'Alan Smithee'
         ENV['GIT_AUTHOR_EMAIL'] = 'asmithee@example.com'
         ex.run
       ensure
+        ENV.delete('GIT_COMMIT')
         ENV.delete('GIT_AUTHOR_NAME')
         ENV.delete('GIT_AUTHOR_EMAIL')
       end
@@ -233,9 +235,12 @@ describe 'dco' do
 
     context 'filter mode' do
       let(:input) { '' }
+      let(:git_ident) { {} }
       let(:stdin) { double('STDIN', read: input) }
       before do
-        git_init
+        # Use a let variable instead of calling git_init again in a later before
+        # block because we need to all command running before the STDIN stub.
+        git_init git_ident
         stub_const('STDIN', stdin)
       end
 
@@ -249,6 +254,52 @@ describe 'dco' do
           expect(subject.stderr).to eq ''
         end
       end # /context with a normal commit
+
+      context 'with existing sign-off' do
+        let(:input) { "test commit\n\nSigned-off-by: Someone Else <other@example.com>\n" }
+        dco_command 'process_commit_message'
+
+        it do
+          expect(subject.exitstatus).to eq 0
+          expect(subject.stdout).to eq "test commit\n\nSigned-off-by: Someone Else <other@example.com>\n"
+          expect(subject.stderr).to eq ''
+        end
+      end # /context with existing sign-off
+
+      context 'with --behalf' do
+        let(:input) { "test commit\n" }
+        let(:git_ident) { {name: 'Someone Else', email: 'other@example.com'} }
+        dco_command 'process_commit_message --behalf http://example.com/'
+
+        it do
+          expect(subject.exitstatus).to eq 0
+          expect(subject.stdout).to eq "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>\nSign-off-executed-by: Someone Else <other@example.com>\nApproved-at: http://example.com/\n"
+          expect(subject.stderr).to eq ''
+        end
+      end # /context with --behalf
+
+      context 'with someone elses commit' do
+        let(:input) { "test commit\n" }
+        let(:git_ident) { {name: 'Someone Else', email: 'other@example.com'} }
+        dco_command 'process_commit_message'
+
+        it do
+          expect(subject.exitstatus).to eq 1
+          expect(subject.stdout).to eq "test commit\n"
+          expect(subject.stderr).to eq "Author mismatch on commit abcd123: asmithee@example.com vs other@example.com\n"
+        end
+      end # /context with someone elses commit
+
+      context 'with --repo' do
+        let(:input) { "test commit\n" }
+        subject { dco_command "process_commit_message --repo '#{temp_path}'" }
+
+        it do
+          expect(subject.exitstatus).to eq 0
+          expect(subject.stdout).to eq "test commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>\n"
+          expect(subject.stderr).to eq ''
+        end
+      end # /context with --repo
     end # /context filter mode
   end # /describe dco process_commit_message
 
