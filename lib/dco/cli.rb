@@ -141,7 +141,7 @@ EOH
     HOOK_PATH = '.git/hooks/commit-msg'
 
     desc 'enable', 'Enable auto-sign-off for this repository'
-    option :yes, aliases: 'y', type: :boolean
+    option :yes, aliases: 'y', type: :boolean, desc: 'Agree to all prompts'
     def enable
       assert_repo!
       unless our_hook?
@@ -168,13 +168,13 @@ EOH
     end
 
     desc 'sign', 'Retroactively apply sign-off to the a branch'
-    option :base, type: :string, banner: '<branch>'
+    option :base, type: :string, banner: '<branch>', default: 'master', desc: 'Base branch (default: master)'
     option :behalf, aliases: 'b', type: :string, banner: '<url>'
     option :yes, aliases: 'y', type: :boolean
     def sign(branch=nil)
       # What two branches are we using?
-      base_branch = options[:base] || 'master'
-      branch = branch || repo.current_branch.tap {|b| raise Thor::Error.new("No explicit branch passed and current head looks detached: #{b}") if b[0] == '(' }
+      base_branch = options[:base]
+      branch ||= current_branch
       if base_branch == branch
         # This should also catch people trying to sign-off on master.
         raise Thor::Error.new("Cannot use #{branch} for both the base and target branch")
@@ -208,7 +208,7 @@ EOH
       # Display the list of commits.
       say("Going to sign-off the following commits:")
       commits.each do |commit|
-        say("* #{commit.sha[0..6]} #{commit.author.name} <#{commit.author.email}> #{commit.message.split(/\n/).first}")
+        say("* #{format_commit(commit)}")
       end
 
       # Get confirmation.
@@ -235,10 +235,47 @@ EOH
       say("Don't forget to use --force when pushing this branch to your git server (eg. git push --force origin #{branch})", :green) # TODO I could detect the actual remote for this branch, if any.
     end
 
+    desc 'check', 'Check if a branch or repository has valid sign-off'
+    option :all, type: :boolean, aliases: 'a', desc: 'Check commits, not just a single branch'
+    option :base, type: :string, banner: '<branch>', default: 'master', desc: 'Base branch (default: master)'
+    option :quiet, type: :boolean, aliases: 'q', desc: 'Quiet output'
+    option :allow_author_mismatch, type: :boolean, desc: 'Allow author vs. sign-off mismatch'
+    def check(branch=nil)
+      branch ||= current_branch
+      log = (options[:all] || branch == options[:base]) ? repo.log :  repo.log.between(options[:base], branch)
+      bad_commits = []
+      log.each do |commit|
+        sign_off = has_sign_off?(commit)
+        if !sign_off
+          # No sign-off at all, tsk tsk.
+          bad_commits << [commit, :no_sign_off]
+        elsif !options[:allow_author_mismatch] && sign_off != "#{commit.author.name} <#{commit.author.email}>"
+          # The signer-off and commit author don't match.
+          bad_commits << [commit, :author_mismatch]
+        end
+      end
+
+      if bad_commits.empty?
+        # Yay!
+        say("All commits are signed off", :green) unless options[:quiet]
+      else
+        # Something bad happened.
+        unless options[:quiet]
+          say("N: No Sign-off   M: Author mismatch", :red)
+          bad_commits.each do |commit, reason|
+            reason_string = {no_sign_off: 'N', author_mismatch: 'M'}[reason]
+            say("#{reason_string} #{format_commit(commit)}", :red)
+          end
+        end
+        exit 1
+      end
+    end
+
     private
 
     # Modified version of Thor's #yes? to understand -y and non-interactive usage.
     #
+    # @api private
     # @param msg [String] Message to show
     # @return [Boolean]
     def confirm?(msg)
@@ -282,6 +319,14 @@ EOH
       @repo_config ||= repo.config
     end
 
+    # Get the current branch but raise an error if it looks like we're on a detched head.
+    #
+    # @api private
+    # @return [String]
+    def current_branch
+      repo.current_branch.tap {|b| raise Thor::Error.new("No explicit branch passed and current head looks detached: #{b}") if b[0] == '(' }
+    end
+
     # Check if we are in control of the commit-msg hook.
     #
     # @api private
@@ -298,14 +343,27 @@ EOH
       "#{repo_config['user.name']} <#{repo_config['user.email']}>"
     end
 
+    # Make a one-line version of a commit for use in displays.
+    #
+    # @api private
+    # @param commit [Git::Commit] Commit object to format
+    # @return [String]
+    def format_commit(commit)
+      "#{commit.sha[0..6]} #{commit.author.name} <#{commit.author.email}> #{commit.message.split(/\n/).first}"
+    end
+
     # Check if a commit or commit message is already signed off.
     #
     # @api private
     # @param commit_or_message [String, Git::Commit] Commit object or message string.
-    # @return [Boolean]
+    # @return [String, nil]
     def has_sign_off?(commit_or_message)
       message = commit_or_message.is_a?(String) ? commit_or_message : commit_or_message.message
-      message =~ /^Signed-off-by:/m
+      if message =~ /^Signed-off-by: (.+)$/
+        $1
+      else
+        nil
+      end
     end
   end
 end

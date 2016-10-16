@@ -35,7 +35,8 @@ will have the declaration added. This is equivalent to always using `git commit 
 even in git tools that do not support it.
 
 The auto-sign-off is implemented using a `commit-msg` hook to rewrite the log
-message as needed.
+message as needed. Unlike `git alias commit "commit -s"`, this will work with
+any Git interface, including GUIs and IDE integration.
 
 ### `dco disable`
 
@@ -60,6 +61,11 @@ Signed-off-by: Alan Smithee <asmithee@example.com>
 Sign-off-executed-by: Commiter McCommiterface <other@example.com>
 Approved-at: https://github.com/me/myproject/pulls/1#issuecomment-238042611
 ```
+
+### `dco check`
+
+The `dco check` verifies the DCO sign-off for all commits in a branch. By default
+it also checks that the sign-off for each commit matches that commit's author.
 
 ## Sponsors
 
