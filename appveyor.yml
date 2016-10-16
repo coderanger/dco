@@ -1,5 +1,3 @@
-version: 1.0.{build}-{branch}
-
 cache:
   - vendor/bundle
 
