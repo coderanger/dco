@@ -149,8 +149,9 @@ describe 'dco check' do
   end # /context with the master branch
 
   context 'with an author mismatch' do
+    file 'msg', "first branch commit\n\nSigned-off-by: Commiter McCommiterface <other@example.com>\n"
     before do
-      command "echo three > testing && git commit -a -m \"first branch commit\n\nSigned-off-by: Commiter McCommiterface <other@example.com>\n\""
+      command 'echo three > testing && git commit -a -F msg'
     end
 
     it do
