@@ -51,6 +51,14 @@ This can also be used to sign-off a branch on the behalf of another contributor.
 You must provide a link to a public declaration that the user is agreeing to the
 DCO: `dco sign --behalf 'https://github.com/me/myproject/pulls/1#issuecomment-238042611'`.
 
+When signing on the behalf of another user, you will get a comment like:
+
+```
+Signed-off-by: Alan Smithee <asmithee@example.com>
+Sign-off-executed-by: Commiter McCommiterface <other@example.com>
+Approved-at: https://github.com/me/myproject/pulls/1#issuecomment-238042611
+```
+
 ## Sponsors
 
 Development sponsored by [Bloomberg](http://www.bloomberg.com/company/technology/).
