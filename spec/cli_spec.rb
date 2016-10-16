@@ -40,7 +40,7 @@ describe 'dco' do
   end
 
   def git_init(name: 'Alan Smithee', email: 'asmithee@example.com')
-    command "git init && git config user.name '#{name}' && git config user.email '#{email}'"
+    command "git init && git config user.name \"#{name}\" && git config user.email \"#{email}\""
   end
   def self.git_init(*args)
     before { git_init(*args) }
