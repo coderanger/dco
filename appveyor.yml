@@ -1,3 +1,5 @@
+version: {build}
+
 cache:
   - vendor/bundle
 
