@@ -9,6 +9,7 @@ environment:
     - RUBY_VERSION: 23
 
 install:
+  - ps: Invoke-WebRequest -Uri https://technet.microsoft.com/en-us/sysinternals/bb896655.aspx -OutFile C:\handle.zip; Expand-Archive c:\handle.zip -dest c:\
   - set PATH=C:\Ruby%RUBY_VERSION%\bin;%PATH%
   - gem install bundler
   - bundle install --path vendor/bundle
