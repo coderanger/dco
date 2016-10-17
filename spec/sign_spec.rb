@@ -225,11 +225,12 @@ describe 'dco sign' do
       puts("UNCOMMITTED CHANGES OUTPUT #{subject.stdout.inspect} #{subject.stderr.inspect}")
       puts("STASH FILE? #{Dir.entries(File.join(temp_path, '.git/logs/refs')).inspect}")
       puts(File.stat(File.join(temp_path, '.git/logs/refs/stash')).inspect)
+      puts("HANDLE #{command("handle.exe stash").stdout}")
       # For some reason, windows leaves this file here?
       stash_path = File.join(temp_path, '.git/logs/refs/stash')
       if File.exist?(stash_path)
-        sleep(5)
-        command("cmd.exe /C \"DEL /F /Q #{stash_path.gsub(/\//, '\\')}\"")
+        File.rename(stash_path, stash_path+'.bak')
+        File.unlink(stash_path+'.bak')
       end
 
       expect(subject.exitstatus).to eq 0
