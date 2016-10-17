@@ -227,7 +227,10 @@ describe 'dco sign' do
       puts(File.stat(File.join(temp_path, '.git/logs/refs/stash')).inspect)
       # For some reason, windows leaves this file here?
       stash_path = File.join(temp_path, '.git/logs/refs/stash')
-      File.unlink(stash_path) if File.exist?(stash_path)
+      if File.exist?(stash_path)
+        File.chmod(00666, stash_path)
+        File.unlink(stash_path)
+      end
 
       expect(subject.exitstatus).to eq 0
       expect(subject.stdout).to match /^Stashing uncommited changes before continuing$/
