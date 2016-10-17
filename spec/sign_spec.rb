@@ -222,16 +222,9 @@ describe 'dco sign' do
     dco_command 'sign -y mybranch'
 
     it do
-      puts("UNCOMMITTED CHANGES OUTPUT #{subject.stdout.inspect} #{subject.stderr.inspect}")
-      puts("STASH FILE? #{Dir.entries(File.join(temp_path, '.git/logs/refs')).inspect}")
-      puts(File.stat(File.join(temp_path, '.git/logs/refs/stash')).inspect)
-      puts("HANDLE #{command("C:\\handle.exe -accepteula stash").stdout}")
-      # For some reason, windows leaves this file here?
-      stash_path = File.join(temp_path, '.git/logs/refs/stash')
-      if File.exist?(stash_path)
-        File.rename(stash_path, stash_path+'.bak')
-        File.unlink(stash_path+'.bak')
-      end
+      require 'rbconfig'
+      puts("HANDLE #{command("C:\\handle.exe -accepteula stash").stdout}") if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
+      GC.start
 
       expect(subject.exitstatus).to eq 0
       expect(subject.stdout).to match /^Stashing uncommited changes before continuing$/
