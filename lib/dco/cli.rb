@@ -27,6 +27,19 @@ module Dco
       true
     end
 
+    # Fix the basename display in ChefDK.
+    #
+    # @api private
+    # @return [String]
+    def self.basename
+      ret = super
+      if ret == 'chef'
+        'chef dco'
+      else
+        ret
+      end
+    end
+
     no_commands do
       # Return the path for the git repository we will process. Defaults to the
       # current working directory.
