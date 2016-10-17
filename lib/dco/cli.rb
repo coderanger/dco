@@ -163,7 +163,9 @@ EOH
       unless our_hook?
         raise Thor::Error.new('commit-msg hook is external, not removing')
       end
-      File.unlink(HOOK_PATH)
+      if File.exist?(HOOK_PATH)
+        File.unlink(HOOK_PATH)
+      end
       say('DCO auto-sign-off disabled', :green)
     end
 
