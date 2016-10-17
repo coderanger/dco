@@ -228,7 +228,7 @@ describe 'dco sign' do
       # For some reason, windows leaves this file here?
       stash_path = File.join(temp_path, '.git/logs/refs/stash')
       if File.exist?(stash_path)
-        File.chmod(00666, stash_path)
+        sleep(5)
         File.unlink(stash_path)
       end
 
