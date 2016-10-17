@@ -214,4 +214,17 @@ describe 'dco sign' do
       expect(subject.stderr).to eq "Backup ref present, not continuing\n"
     end
   end # /context with an existing backup pointer without -y
+
+  context 'with uncommitted changes' do
+    before do
+      command 'echo three > testing && git commit -a -m "first branch commit" && echo four > testing'
+    end
+    dco_command 'sign -y mybranch'
+
+    it do
+      expect(subject.exitstatus).to eq 0
+      expect(subject.stdout).to match /^Stashing uncommited changes before continuing$/
+      expect(IO.read(File.join(temp_path, 'testing'))).to eq "four\n"
+    end
+  end # /context with uncommitted changes
 end

@@ -236,14 +236,33 @@ EOH
         raise Thor::Error.new('Not signing off on commits without approval')
       end
 
+      # Stash if needed.
+      did_stash = false
+      status = repo.status
+      unless status.changed.empty? && status.added.empty? && status.deleted.empty?
+        say("Stashing uncommited changes before continuing")
+        repo.branch(repo.current_branch).stashes.save('dco-sign temp stash')
+        did_stash = true
+      end
+
       # Run the filter branch. Here be dragons. Yes, I'm calling a private method. I'm sorry.
       filter_cmd = [Thor::Util.ruby_command, File.expand_path('../../../bin/dco', __FILE__), 'process_commit_message', '--repo', repo.dir.path]
       if options[:behalf]
         filter_cmd << '--behalf'
         filter_cmd << options[:behalf]
       end
-      output = repo.lib.send(:command, 'filter-branch', ['--msg-filter', Shellwords.join(filter_cmd), "#{base_branch}..#{branch}"])
-      say(output)
+      begin
+        output = repo.lib.send(:command, 'filter-branch', ['--msg-filter', Shellwords.join(filter_cmd), "#{base_branch}..#{branch}"])
+        say(output)
+       ensure
+        if did_stash
+          # If we had a stash, make sure to replay it.
+          say("Unstashing previous changes")
+          repo.branch(repo.current_branch).stashes.apply
+          # For whatever reason, the git gem doesn't expose this.
+          repo.lib.send(:command, 'stash', ['drop'])
+        end
+      end
 
       # Hopefully that worked.
       say("Sign-off complete", :green)
