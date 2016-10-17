@@ -224,7 +224,6 @@ describe 'dco sign' do
     it do
       require 'rbconfig'
       puts("HANDLE #{command("C:\\handle.exe -accepteula stash").stdout}") if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
-      GC.start
 
       expect(subject.exitstatus).to eq 0
       expect(subject.stdout).to match /^Stashing uncommited changes before continuing$/
