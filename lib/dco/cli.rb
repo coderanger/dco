@@ -241,8 +241,7 @@ EOH
       status = repo.status
       unless status.changed.empty? && status.added.empty? && status.deleted.empty?
         say("Stashing uncommited changes before continuing")
-        repo.branch(repo.current_branch).stashes.save('dco-sign temp stash')
-        # repo.lib.send(:command, 'stash', ['save', 'dco sign temp stash'])
+        repo.lib.send(:command, 'stash', ['save', 'dco sign temp stash'])
         did_stash = true
       end
 
@@ -259,9 +258,8 @@ EOH
         if did_stash
           # If we had a stash, make sure to replay it.
           say("Unstashing previous changes")
-          repo.branch(repo.current_branch).stashes.apply
           # For whatever reason, the git gem doesn't expose this.
-          repo.lib.send(:command, 'stash', ['drop'])
+          repo.lib.send(:command, 'stash', ['pop'])
         end
       end
 

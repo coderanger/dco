@@ -221,13 +221,7 @@ describe 'dco sign' do
     end
     dco_command 'sign -y mybranch'
 
-    fit do
-      require 'rbconfig'
-      puts("HANDLE #{command("C:\\handle.exe -accepteula stash").stdout}") if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
-      ObjectSpace.each_object(File) do |obj|
-        obj.close if obj.path == File.join(temp_path, '.git/logs/refs/stash')
-      end
-
+    it do
       expect(subject.exitstatus).to eq 0
       expect(subject.stdout).to match /^Stashing uncommited changes before continuing$/
       expect(IO.read(File.join(temp_path, 'testing'))).to eq "four\n"
