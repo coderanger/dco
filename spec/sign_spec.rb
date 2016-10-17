@@ -222,6 +222,7 @@ describe 'dco sign' do
     dco_command 'sign -y mybranch'
 
     it do
+      puts("UNCOMMITTED CHANGES OUTPUT #{subject.stdout.inspect} #{subject.stderr.inspect}")
       expect(subject.exitstatus).to eq 0
       expect(subject.stdout).to match /^Stashing uncommited changes before continuing$/
       expect(IO.read(File.join(temp_path, 'testing'))).to eq "four\n"
