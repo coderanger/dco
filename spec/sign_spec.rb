@@ -224,7 +224,7 @@ describe 'dco sign' do
     it do
       expect(subject.exitstatus).to eq 0
       expect(subject.stdout).to match /^Stashing uncommited changes before continuing$/
-      expect(IO.read(File.join(temp_path, 'testing'))).to eq "four\n"
+      expect(IO.read(File.join(temp_path, 'testing')).strip).to eq "four"
     end
   end # /context with uncommitted changes
 end
