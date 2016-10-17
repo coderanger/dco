@@ -229,7 +229,7 @@ describe 'dco sign' do
       stash_path = File.join(temp_path, '.git/logs/refs/stash')
       if File.exist?(stash_path)
         sleep(5)
-        command("cmd.exe /c \"erase #{temp_path}\"")
+        command("cmd.exe /c \"erase #{temp_path.replace(/\//, '\\')}\"")
       end
 
       expect(subject.exitstatus).to eq 0
