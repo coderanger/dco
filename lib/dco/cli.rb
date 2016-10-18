@@ -196,16 +196,17 @@ EOH
       end
 
       # First check for a stored ref under refs/original/.
-      begin
-        repo.show("refs/original/refs/heads/#{branch}")
-        # If this doesn't error, a backup ref is present.
-        unless confirm?("An existing backup of branch #{branch} is present from a previous filter-branch. Do you want to remove this backup and continue? [yes/no]")
-          raise Thor::Error.new('Backup ref present, not continuing')
-        end
-        # Clear the backup.
-        File.unlink(".git/refs/original/refs/heads/#{branch}")
-      rescue Git::GitExecuteError
-        # This means there was no backup, keep going.
+      backup_refs = Dir[File.join(repo.repo.path, 'refs/original/refs/heads/*')]
+      backup_refs_label = if backup_refs.size > 1
+        "branches #{backup_refs.map {|p| File.basename(p) }.join(', ')} are"
+      else
+        "branch #{backup_refs.first} is"
+      end
+      unless backup_refs.empty? || confirm?("An existing backup of #{backup_refs_label} present from a previous filter-branch. Do you want to remove this backup and continue? [yes/no]")
+        raise Thor::Error.new('Backup ref present, not continuing')
+      end
+      backup_refs.each do |ref|
+        File.unlink(ref)
       end
 
       # Next examine all the commits we will be touching.

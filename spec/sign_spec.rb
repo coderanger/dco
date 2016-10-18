@@ -201,6 +201,25 @@ describe 'dco sign' do
     end
   end # /context with an existing backup pointer
 
+  context 'with an existing backup pointer from a different branch' do
+    before do
+      command 'echo three > testing && git commit -a -m "first branch commit"'
+      dco_command 'sign -y mybranch'
+      command 'git checkout -b mybranch2 && echo four > testing && git commit -a -m "second branch commit"'
+    end
+    dco_command 'sign -y mybranch2'
+
+    it do
+      expect(subject.exitstatus).to eq 0
+      expect(subject.stdout).to match /^Developer's Certificate of Origin 1\.1$/
+      expect(subject.stdout).to match /^Going to sign-off the following commits:\n\* \h{7} Alan Smithee <asmithee@example\.com> second branch commit$/
+      expect(repo.log[0].message).to eq "second branch commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>"
+      expect(repo.log[1].message).to eq "first branch commit\n\nSigned-off-by: Alan Smithee <asmithee@example.com>"
+      expect(repo.log[2].message).to eq "second commit"
+      expect(repo.log[3].message).to eq "first commit"
+    end
+  end # /context with an existing backup pointer from a different branch
+
   context 'with an existing backup pointer without -y' do
     before do
       command 'echo three > testing && git commit -a -m "first branch commit"'
