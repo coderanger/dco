@@ -16,4 +16,12 @@
 
 source 'https://rubygems.org/'
 
-gemspec path: File.expand_path('..', __FILE__)
+gemspec path: File.expand_path(__dir__)
+
+group :debug do
+  gem 'pry'
+end
+
+group :docs do
+  gem 'yard', '~> 0.8'
+end
